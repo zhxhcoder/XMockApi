@@ -1,0 +1,74 @@
+package com.yrd.xmockapi;
+
+import android.app.Activity;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
+
+import com.yrd.xmockapi.data.Task;
+import com.yrd.xmockapi.dataapi.DataApiCallback;
+import com.yrd.xmockapi.dataapi.DataApiManager;
+import com.yrd.xmockapi.dataapi.task.ITaskApi;
+
+import java.util.List;
+
+public class MainActivity extends Activity {
+    private TextView tv_data;
+    private boolean requesting = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        tv_data = (TextView) findViewById(R.id.tv_data);
+
+        getData();
+    }
+
+    private void getData() {
+        if (requesting) return;
+        requesting = true;
+
+        ITaskApi api = DataApiManager.ofTask();
+
+        if (api != null) {
+            api.getTasks(new DataApiCallback<List<Task>>() {
+                @Override
+                public void onSuccess(List<Task> data) {
+                    // show data
+                    Log.d("MOCK", "onSuccess");
+                    StringBuilder sb = new StringBuilder("Success：\n");
+                    for (int i = 0; i < data.size(); i++) {
+                        sb.append(data.get(i).name).append("\n");
+                    }
+
+                    tv_data.setText(sb.toString());
+                    requesting = false;
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    // show error
+                    Log.d("MOCK", "onError");
+                    tv_data.setText("Error：\n" + e.getMessage());
+                    requesting = false;
+                }
+
+                @Override
+                public void onStart() {
+                    // show loading
+                    Log.d("MOCK", "onStart");
+                    tv_data.setText("Loading...");
+                }
+            });
+        } else {
+            requesting = false;
+        }
+    }
+
+    public void onRefreshClick(View view) {
+        getData();
+    }
+}
